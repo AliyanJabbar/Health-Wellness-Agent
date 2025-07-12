@@ -1,11 +1,14 @@
-from agents import function_tool, RunContextWrapper, Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel
+from agents import function_tool, RunContextWrapper, Agent, Runner
 from context import UserSessionContext
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
+
+# utils configuration
+from utils.agent_sdk_gemini_configuration import configuration
+
+external_model = configuration("agent")
+
 
 class MealPlan(BaseModel):
     plan_name: str
@@ -15,16 +18,6 @@ class MealPlan(BaseModel):
     estimated_calories_per_day: int
     shopping_list: List[str]
 
-gemini_key = os.getenv("GEMINI_API_KEY")
-
-external_client = AsyncOpenAI(
-    api_key=gemini_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-)
-
-external_model = OpenAIChatCompletionsModel(
-    model="gemini-2.0-flash", openai_client=external_client
-)
 
 meal_planning_agent = Agent[UserSessionContext](
     name="Meal Planning Agent",
@@ -48,39 +41,40 @@ meal_planning_agent = Agent[UserSessionContext](
     model=external_model,
 )
 
+
 @function_tool()
 async def meal_planner_tool(
     ctx: RunContextWrapper[UserSessionContext],
     duration_days: int = 7,
-    specific_preferences: Optional[str] = None
+    specific_preferences: Optional[str] = None,
 ) -> str:
     """
     Generate a personalized meal plan based on user's goals and dietary preferences.
-    
+
     Args:
         duration_days: Number of days for the meal plan (default 7)
         specific_preferences: Additional dietary preferences or restrictions
     """
     print("-" * 50)
     print("[Tool] Running meal planner")
-    
+
     try:
         # Get user context - Handle GoalOutput object properly
         user_goal = ctx.context.goal
         if not user_goal:
-            return "Please set your fitness goal first using the goal analyzer."
-        
+            return "Please set your fitness goal first like: 'I want to lose 2kg weight in 1 month'. using the goal analyzer."
+
         # Extract goal information properly
-        if hasattr(user_goal, 'action'):
+        if hasattr(user_goal, "action"):
             goal_description = f"{user_goal.action} {user_goal.quantity} {user_goal.entity} in {user_goal.duration}"
         else:
             goal_description = str(user_goal)
-        
+
         diet_prefs = ctx.context.diet_preferences or "no specific preferences"
-        
+
         if specific_preferences:
             diet_prefs += f", {specific_preferences}"
-        
+
         # Create meal plan prompt
         prompt = f"""
         Create a {duration_days}-day meal plan for:
@@ -91,21 +85,20 @@ async def meal_planner_tool(
         Include specific meals, portions, and a shopping list.
         Make sure to provide all required fields: plan_name, duration_days, daily_meals, dietary_preferences, estimated_calories_per_day, shopping_list.
         """
-        
+
         print(f"[Tool] Sending prompt to meal planning agent")
-        
-        
+
         result = await Runner.run(meal_planning_agent, prompt, context=ctx.context)
         meal_plan: MealPlan = result.final_output
-        
+
         print(f"[Tool] Received meal plan: {meal_plan.plan_name}")
-        
+
         # Store in context
         ctx.context.meal_plan = meal_plan.daily_meals
-        
+
         print(f"[Tool] Generated {duration_days}-day meal plan")
         print("-" * 50)
-        
+
         return f"""
         🍽️ **{meal_plan.plan_name}**
         
@@ -120,7 +113,7 @@ async def meal_planner_tool(
         
         Your meal plan has been saved to your profile!
         """
-        
+
     except Exception as e:
         print(f"[Tool] Error in meal planner: {str(e)}")
         print(f"[Tool] Error type: {type(e)}")

@@ -2,27 +2,15 @@ from agents import (
     Agent,function_tool,
     RunContextWrapper,
     Runner,
-    AsyncOpenAI,
-    OpenAIChatCompletionsModel,
 )
+# context
 from context import UserSessionContext
-from dotenv import load_dotenv
-import os
-
+# guardrails
 from guardrails import goal_input_guardrail,goal_output_guardrail,GoalOutput
+# utils configuration
+from utils.agent_sdk_gemini_configuration import configuration
 
-load_dotenv()
-
-gemini_key = os.getenv("GEMINI_API_KEY")
-
-external_client = AsyncOpenAI(
-    api_key=gemini_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-)
-
-external_model = OpenAIChatCompletionsModel(
-    model="gemini-2.0-flash", openai_client=external_client
-)
+external_model = configuration("agent")
 goal_format_agent = Agent[UserSessionContext](
     name="Goal Format Checker",
     instructions="Using input/output guardrails give structured goal.",

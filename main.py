@@ -3,21 +3,22 @@ from agent_flow import health_wellness_agent
 from our_agents.nutrition_agent import nutrition_agent
 from our_agents.escalation_agent import escalation_agent
 from our_agents.injury_agent import injury_agent
-from agents import RunConfig, AsyncOpenAI, OpenAIChatCompletionsModel
 
-# extras
-from dotenv import load_dotenv
-import os
+
+# asyncio for asyncronous programming
 import asyncio
 
 # utils
 from utils.streaming import streamed_response
+# configuration from utils 
+from utils.agent_sdk_gemini_configuration import configuration
 
 # context
 from context import UserSessionContext
 
 # hooks
 from hooks import HealthWellnessRunHooks
+
 
 async def main():
     # initialize the user session context
@@ -27,25 +28,9 @@ async def main():
         history=[],
         diet_preferences="vegetarian",
     )
-    load_dotenv()
-
-    gemini_key = os.getenv("GEMINI_API_KEY")
-
-    external_client = AsyncOpenAI(
-        api_key=gemini_key,
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-    )
-
-    external_model = OpenAIChatCompletionsModel(
-        model="gemini-2.0-flash", openai_client=external_client
-    )
-
-    # Creating config
-    config = RunConfig(
-        model=external_model, 
-        tracing_disabled=True, 
-        model_provider=external_client,
-    )
+    
+    # configuration from utils
+    config = configuration("run")
 
     # Create run_hooks instance
     run_hooks = HealthWellnessRunHooks()
@@ -77,7 +62,11 @@ async def main():
             output = ""
             try:
                 async for chunk in streamed_response(
-                    get_agent(user_context), user_context.history, config, user_context, run_hooks
+                    get_agent(user_context),
+                    user_context.history,
+                    config,
+                    user_context,
+                    run_hooks,
                 ):
                     print(chunk, end="", flush=True)
                     output += chunk
@@ -85,6 +74,7 @@ async def main():
                 user_context.history.append({"role": "assistant", "content": output})
             except Exception as e:
                 print(f"\n❌ Error in streaming: {str(e)}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -29,7 +29,7 @@ REMEMBER:
 3. After having info about diet and goal start creating a meal plan using meal planner tool.
 4. ask user if he/she wants workout, if so, then take props for workout recommender tool
 5. If you have details like is user a begginer and for how many days he workout in a week, then use workout recommender tool.
-
+keypoint: the flow should be goal analyzer -> meal planner or goal analyzer -> workout recommender.
 use other tools for getting info
 Be helpful, informative, and make the meal plan easy to follow.
 """,
