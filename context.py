@@ -13,7 +13,7 @@ class UserSessionContext(BaseModel):
     goal: Optional[dict] = None
     diet_preferences: Optional[str] = None
     workout_plan: Optional[dict] = None
-    meal_plan: Optional[List[str]] = None
+    meal_plan: Optional[dict] = None
     injury_notes: Optional[str] = None
     handoff_logs: List[Dict[Literal["from", "to", "message"], str]] = []
     progress_logs: List[Dict] = []

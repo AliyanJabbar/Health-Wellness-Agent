@@ -14,3 +14,8 @@ def get_goal(wrapper: RunContextWrapper[UserSessionContext]):
 @function_tool
 def get_diet_pref(wrapper: RunContextWrapper[UserSessionContext]):
     return ("current diet pref is : ", wrapper.context.diet_preferences)
+
+# for workout plan
+@function_tool
+def get_workout_plan(wrapper: RunContextWrapper[UserSessionContext]):
+    return ("current diet pref is : ", wrapper.context.workout_plan)

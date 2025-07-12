@@ -6,28 +6,40 @@ from typing import Any
 class HealthWellnessRunHooks(RunHooks[UserSessionContext]):
     """Global lifecycle hooks for logging tool and agent activities"""
 
-    async def on_agent_start(self, wrapper: RunContextWrapper[UserSessionContext], agent: Any):
+    async def on_agent_start(
+        self, wrapper: RunContextWrapper[UserSessionContext], agent: Any
+    ):
         print("-" * 30, f"{agent.name} started", "-" * 30)
 
-    async def on_agent_end(self, wrapper: RunContextWrapper[UserSessionContext], agent: Any, result: Any):
+    async def on_agent_end(
+        self, wrapper: RunContextWrapper[UserSessionContext], agent: Any, result: Any
+    ):
         print("-" * 30, f"{agent.name} ended", "-" * 30)
 
-    async def on_tool_start(self, wrapper: RunContextWrapper[UserSessionContext], tool: Any, agent: Any):
+    async def on_tool_start(
+        self, wrapper: RunContextWrapper[UserSessionContext], tool: Any, agent: Any
+    ):
         print("-" * 30, f"{tool.name} started (Agent: {agent.name})", "-" * 30)
 
-    async def on_tool_end(self, wrapper: RunContextWrapper[UserSessionContext], tool: Any, agent: Any, result: Any):
+    async def on_tool_end(
+        self,
+        wrapper: RunContextWrapper[UserSessionContext],
+        tool: Any,
+        agent: Any,
+        result: Any,
+    ):
         print("-" * 30, f"{tool.name} ended (Agent: {agent.name})", "-" * 30)
-
-    async def on_handoff(self, wrapper: RunContextWrapper[UserSessionContext], from_agent: Any, to_agent: Any):
-        print("-" * 30, f"Handoff: {from_agent.name} → {to_agent.name}", "-" * 30)
-        wrapper.context.current_agent = to_agent.name
 
 
 class HealthWellnessAgentHooks(AgentHooks[UserSessionContext]):
     """Per-agent lifecycle hooks"""
 
-    async def on_start(self, wrapper: RunContextWrapper[UserSessionContext], agent: Any):
-        print("-" * 30, f"Session started: {agent.name} for {wrapper.context.name}", "-" * 30)
+    async def on_start(
+        self, wrapper: RunContextWrapper[UserSessionContext], agent: Any
+    ):
+        print("-" * 30, f"Session started: {agent.name}", "-" * 30)
 
-    async def on_end(self, wrapper: RunContextWrapper[UserSessionContext], agent: Any, result: Any):
-        print("-" * 30, f"Session ended: {agent.name} for {wrapper.context.name}", "-" * 30)
+    async def on_end(
+        self, wrapper: RunContextWrapper[UserSessionContext], agent: Any, result: Any
+    ):
+        print("-" * 30, f"Session ended: {agent.name}", "-" * 30)
