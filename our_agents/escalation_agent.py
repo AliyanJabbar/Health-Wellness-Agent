@@ -1,8 +1,13 @@
 from agents import Agent
 
+# prompt for better handoffs
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+
 escalation_agent = Agent(
     name="escalation_agent",
-    instructions="""
+    instructions=f"""
+    {RECOMMENDED_PROMPT_PREFIX}
+    
 You are an escalation agent responsible for handling urgent or complex health and wellness cases in Pakistan.
 
 Key responsibilities:

@@ -9,9 +9,15 @@ from tools.goal_analyzer import goal_analyzer
 from tools.meal_planner import meal_planner_tool
 from tools.workout_recommender import workout_recommender_tool
 
+# prompt for better handoffs
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+
+
 nutrition_agent = Agent(
     name="nutrition_agent",
-    instructions="""
+    instructions=f"""
+    {RECOMMENDED_PROMPT_PREFIX}
+    
 You are a nutrition expert agent responsible for creating personalized dietary or meal plans based on the user's goals and preferences.
 
 Your responsibilities:
@@ -20,7 +26,6 @@ Your responsibilities:
 - Dietary preferences (e.g., vegetarian, vegan, keto, halal, etc.)
 - Health goals (e.g., weight loss, muscle gain, energy boost)
 - Generate a clear and practical nutrition plan based on the input
-- Always assign a descriptive title to the plan, e.g., "7-Day Muscle Gain Plan for Vegetarians"
 - Avoid recommending medical treatments or supplements unless the user explicitly asks
 - If a user gives incomplete goal then you should suggest them that what is necessary by cross questioning
 REMEMBER:

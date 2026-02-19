@@ -1,36 +1,55 @@
 from agents import (
-    Agent,function_tool,
+    Agent,
+    function_tool,
     RunContextWrapper,
     Runner,
 )
+
 # context
 from context import UserSessionContext
-# guardrails
-from guardrails import goal_input_guardrail,goal_output_guardrail,GoalOutput
-# utils configuration
-from utils.agent_sdk_gemini_configuration import configuration
 
-external_model = configuration("agent")
-goal_format_agent = Agent[UserSessionContext](
-    name="Goal Format Checker",
-    instructions="Using input/output guardrails give structured goal.",
+# utils configuration
+from utils.agent_sdk_gemini_configuration import low_external_model
+
+# pydantic model for validation
+from pydantic import BaseModel
+
+
+# schema to follow
+class GoalOutput(BaseModel):
+    is_valid: bool
+    action: str
+    entity: str
+    quantity: str
+    duration: str
+
+
+goal_format_checker = Agent[UserSessionContext](
+    name="goal_format_checker",
+    instructions="Extract action, entity, quantity and duration and set is_valid if all are present. e.g: I want to lose(action) 2kg(quantity) weight(entity) in 2months(duration). If something is missing then set is_valid to False also set that item to None.",
     output_type=GoalOutput,
-    model=external_model,
-    input_guardrails=[goal_input_guardrail],
-    output_guardrails=[goal_output_guardrail],
+    model=low_external_model,
 )
 
+
 @function_tool()
-async def goal_analyzer(ctx: RunContextWrapper[UserSessionContext], goal_input: str) -> str:
-    # REMOVED MANUAL PRINTS - HOOKS HANDLE THIS NOW
-    
-    # Now guardrails run automatically
-    result = await Runner.run(goal_format_agent, goal_input, context=ctx.context)
-    final: GoalOutput = result.final_output
+async def goal_analyzer(
+    wrapper: RunContextWrapper[UserSessionContext], goal_input: str
+) -> str:
+    """
+    function_tool to check if the goal is clear.
 
-    if not final.is_valid:
-        return "Your goal seems unclear. Could you specify how much and in how long?"
+    args:
+        goal_input: str (a detailed goal like 'I want to lose 2kg weight in 7days')
 
-    ctx.context.goal = final
+    return:
+        str
+    """
+    result = await Runner.run(goal_format_checker, goal_input, context=wrapper.context)
+    goal: GoalOutput = result.final_output
 
-    return f"Great! You want to {final.action} {final.entity} {final.quantity} in {final.duration}."
+    if not goal.is_valid:
+        return "Your goal seems unclear. Please specify your goal like ' I want to lose 2kg weight in 7days'"
+
+    wrapper.context.goal = goal
+    return f"Great! You want to {goal.action} {goal.entity} {goal.quantity} in {goal.duration}. Is that clear ?"
