@@ -8,10 +8,9 @@ class UserSessionContext(BaseModel):
     # attributes
     name: str
     uid: int
-    history: Optional[List[Dict[Literal["role", "content"], str]]]
     current_agent: Optional[str] = "health_wellness_agent"
     goal: Optional[dict] = None
-    diet_preferences: Optional[str] = None
+    diet_preferences: Optional[List[str]]
     workout_plan: Optional[dict] = None
     meal_plan: Optional[dict] = None
     injury_notes: Optional[str] = None

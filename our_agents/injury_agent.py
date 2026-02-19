@@ -1,8 +1,13 @@
 from agents import Agent
 
+# prompt for better handoffs
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+
 injury_agent = Agent(
     name="injury_agent",
-    instructions="""
+    instructions=f"""
+    {RECOMMENDED_PROMPT_PREFIX}
+    
 You are an injury support agent responsible for assisting users in managing and recovering from physical injuries.
 
 Your role includes:

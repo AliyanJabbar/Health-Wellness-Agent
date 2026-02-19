@@ -8,7 +8,7 @@ def handoff_handler(
 ):
     def handoff_callback(wrapper: RunContextWrapper[UserSessionContext]):
         print(on_handoff_message)
-        # handling handoff logs
+        # 1.adding handoff logs
         if hasattr(wrapper, "context") and hasattr(wrapper.context, "add_handoff_log"):
             wrapper.context.add_handoff_log(
                 {
@@ -17,11 +17,11 @@ def handoff_handler(
                     "message": on_handoff_message,
                 }
             )
-        # updating current agent
+        # 2.updating current agent
         if hasattr(wrapper, "context") and hasattr(wrapper.context, "current_agent"):
             wrapper.context.current_agent = str(agent.name)
 
-        return agent
+        # return agent #we don't need this
 
     return handoff(
         agent=agent,

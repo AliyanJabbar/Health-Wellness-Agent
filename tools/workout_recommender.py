@@ -1,12 +1,11 @@
 from agents import function_tool, RunContextWrapper, Agent, Runner
 from pydantic import BaseModel
-from typing import List
 
 # context
 from context import UserSessionContext
 
 # utils configuration
-from utils.agent_sdk_gemini_configuration import configuration
+from utils.agent_sdk_gemini_configuration import low_external_model
 
 
 class WorkoutPlan(BaseModel):
@@ -14,34 +13,31 @@ class WorkoutPlan(BaseModel):
     goal_type: str
     experience_level: str
     frequency: int
-    exercises: List[str]
-    equipment_needed: List[str]
+    exercises: list[str]
+    equipment_needed: list[str]
 
-
-external_model = configuration("agent")
 
 workout_planning_agent = Agent[UserSessionContext](
     name="Workout Planning Agent",
     instructions="""Create a structured workout plan based on user goals and fitness level.
     Include exercises, equipment needed, and adjust intensity based on experience level.""",
     output_type=WorkoutPlan,
-    model=external_model,
+    model=low_external_model,
 )
 
 
 @function_tool()
 async def workout_recommender_tool(
-    ctx: RunContextWrapper[UserSessionContext],
-    experience_level: str = "beginner",
-    workout_days_per_week: int = 3,
+    wrapper: RunContextWrapper[UserSessionContext],
+    experience_level: str,
+    workout_days_per_week: int,
 ) -> str:
     """Generate a personalized workout plan based on user's fitness goals."""
 
-    if not ctx.context.goal:
-        return "Please set your fitness goal first using the goal analyzer."
+    if not wrapper.context.goal:
+        return "Please set your health goal first using the goal analyzer."
 
-    # FIX: Handle GoalOutput object properly
-    user_goal = ctx.context.goal
+    user_goal = wrapper.context.goal
     if hasattr(user_goal, "action"):
         goal_description = f"{user_goal.action} {user_goal.quantity} {user_goal.entity} in {user_goal.duration}"
     else:
@@ -51,14 +47,14 @@ async def workout_recommender_tool(
     Create a {workout_days_per_week}-day workout plan for:
     - Goal: {goal_description}
     - Experience level: {experience_level}
-    - User: {ctx.context.name}
+    - User: {wrapper.context.name}
     """
 
-    result = await Runner.run(workout_planning_agent, prompt, context=ctx.context)
+    result = await Runner.run(workout_planning_agent, prompt, context=wrapper.context)
     workout_plan: WorkoutPlan = result.final_output
 
     # Store in context
-    ctx.context.workout_plan = workout_plan.dict()
+    wrapper.context.workout_plan = workout_plan
 
     return f"""
     💪 **{workout_plan.plan_name}**
@@ -68,6 +64,9 @@ async def workout_recommender_tool(
     **Frequency:** {workout_plan.frequency} days/week
     
     **Equipment:** {', '.join(workout_plan.equipment_needed)}
+
+    **Exercises:**
+    {', '.join(workout_plan.exercises)}
     
     Your workout plan has been saved!
     """
